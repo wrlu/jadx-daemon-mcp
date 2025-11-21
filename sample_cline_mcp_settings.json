@@ -1,8 +1,3 @@
-
- ## Jadx Daemon MCP
-A jadx daemon service MCP server.
-
-```json
 {
   "mcpServers": {
     "jadx": {
@@ -19,4 +14,3 @@ A jadx daemon service MCP server.
     }
   }
 }
-```
