@@ -135,8 +135,7 @@ def get_all_exported_services(
 )
 def get_method_decompiled_code(
     instanceId: Annotated[str, "An unique string type id to identify this jadx instance."],
-    className: Annotated[str, "The class name needs to be a FQN, e.g. `com.example.abc.SomeClass`."], 
-    methodName: Annotated[str, "The method name needs to be a FQN, e.g. `void testMethod(java.lang.String, int)`."], 
+    methodName: Annotated[str, "The method signature must be the full JVM method signature, e.g. `Lcom/example/abc;->testMethod(Ljava/lang/String;I)V`."],
 ) -> dict:
     url = get_jadx_url()
     query = {
@@ -154,7 +153,7 @@ def get_method_decompiled_code(
 )
 def get_class_decompiled_code(
     instanceId: Annotated[str, "An unique string type id to identify this jadx instance."],
-    className: Annotated[str, "The class name needs to be a FQN, e.g. `com.example.abc.SomeClass`."], 
+    className: Annotated[str, "The class name needs to be a JVM class descriptor, e.g. `Lcom/example/abc/SomeClass;`."],
 ) -> dict:
     url = get_jadx_url()
     query = {
@@ -171,7 +170,7 @@ def get_class_decompiled_code(
 )
 def get_class_smali_code(
     instanceId: Annotated[str, "An unique string type id to identify this jadx instance."],
-    className: Annotated[str, "The class name needs to be a FQN, e.g. `com.example.abc.SomeClass`."], 
+    className: Annotated[str, "The class name needs to be a JVM class descriptor, e.g. `Lcom/example/abc/SomeClass;`."],
 ) -> dict:
     url = get_jadx_url()
     query = {
@@ -188,7 +187,7 @@ def get_class_smali_code(
 )
 def get_superclass(
     instanceId: Annotated[str, "An unique string type id to identify this jadx instance."],
-    className: Annotated[str, "The class name needs to be a FQN, e.g. `com.example.abc.SomeClass`."], 
+    className: Annotated[str, "The class name needs to be a JVM class descriptor, e.g. `Lcom/example/abc/SomeClass;`."],
 ) -> dict:
     url = get_jadx_url()
     query = {
@@ -205,7 +204,7 @@ def get_superclass(
 )
 def get_interfaces(
     instanceId: Annotated[str, "An unique string type id to identify this jadx instance."],
-    className: Annotated[str, "The class name needs to be a FQN, e.g. `com.example.abc.SomeClass`."], 
+    className: Annotated[str, "The class name needs to be a JVM class descriptor, e.g. `Lcom/example/abc/SomeClass;`."],
 ) -> dict:
     url = get_jadx_url()
     query = {
@@ -222,7 +221,7 @@ def get_interfaces(
 )
 def get_class_methods(
     instanceId: Annotated[str, "An unique string type id to identify this jadx instance."],
-    className: Annotated[str, "The class name needs to be a FQN, e.g. `com.example.abc.SomeClass`."], 
+    className: Annotated[str, "The class name needs to be a JVM class descriptor, e.g. `Lcom/example/abc/SomeClass;`."],
 ) -> dict:
     url = get_jadx_url()
     query = {
@@ -239,7 +238,7 @@ def get_class_methods(
 )
 def get_class_fields(
     instanceId: Annotated[str, "An unique string type id to identify this jadx instance."],
-    className: Annotated[str, "The class name needs to be a FQN, e.g. `com.example.abc.SomeClass`."], 
+    className: Annotated[str, "The class name needs to be a JVM class descriptor, e.g. `Lcom/example/abc/SomeClass;`."],
 ) -> dict:
     url = get_jadx_url()
     query = {
@@ -256,8 +255,7 @@ def get_class_fields(
 )
 def get_method_callers(
     instanceId: Annotated[str, "An unique string type id to identify this jadx instance."],
-    className: Annotated[str, "The class name needs to be a FQN, e.g. `com.example.abc.SomeClass`."],
-    methodName: Annotated[str, "The method name needs to be a FQN, e.g. `void testMethod(java.lang.String, int)`."],
+    methodName: Annotated[str, "The method signature must be the full JVM method signature, e.g. `Lcom/example/abc;->testMethod(Ljava/lang/String;I)V`."],
 ) -> dict:
     url = get_jadx_url()
     query = {
@@ -275,7 +273,7 @@ def get_method_callers(
 )
 def get_class_callers(
     instanceId: Annotated[str, "An unique string type id to identify this jadx instance."],
-    className: Annotated[str, "The class name needs to be a FQN, e.g. `com.example.abc.SomeClass`."], 
+    className: Annotated[str, "The class name needs to be a JVM class descriptor, e.g. `Lcom/example/abc/SomeClass;`."],
 ) -> dict:
     url = get_jadx_url()
     query = {
@@ -292,8 +290,7 @@ def get_class_callers(
 )
 def get_method_overrides(
     instanceId: Annotated[str, "An unique string type id to identify this jadx instance."],
-    className: Annotated[str, "The class name needs to be a FQN, e.g. `com.example.abc.SomeClass`."], 
-    methodName: Annotated[str, "The method name needs to be a FQN, e.g. `void testMethod(java.lang.String, int)`."],
+    methodName: Annotated[str, "The method signature must be the full JVM method signature, e.g. `Lcom/example/abc;->testMethod(Ljava/lang/String;I)V`."],
 ) -> dict:
     url = get_jadx_url()
     query = {

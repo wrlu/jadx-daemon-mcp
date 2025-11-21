@@ -213,17 +213,19 @@ public class McpServer {
 	public void handleGetMethodDecompiledCode(Context ctx) {
 		Map<String, Object> response = new HashMap<>();
 		String instanceId = ctx.queryParam("instanceId");
-		String className = ctx.queryParam("className");
 		String methodName = ctx.queryParam("methodName");
 
 		JadxInstance instance = getJadx(instanceId);
 		if (instance != null) {
-			String code = instance.getMethodDecompiledCode(className, methodName);
+			String code = instance.getMethodDecompiledCode(
+                    SignatureConverter.extractJavaClassFQN(methodName),
+                    SignatureConverter.toJavaMethodSignature(methodName)
+            );
 			if (code != null) {
 				response.put("result", code);
 				ctx.json(response);
 			} else {
-				response.put("error", "Cannot find method `" + methodName + "` in class `" + className + "`." );
+				response.put("error", "Cannot find method `" + methodName + "`." );
 				ctx.status(404).json(response);
 			}
 		} else {
@@ -239,7 +241,9 @@ public class McpServer {
 
 		JadxInstance instance = getJadx(instanceId);
 		if (instance != null) {
-			String code = instance.getClassDecompiledCode(className);
+			String code = instance.getClassDecompiledCode(
+                    SignatureConverter.toJavaClassSignature(className)
+            );
 			if (code != null) {
 				response.put("result", code);
 				ctx.json(response);
@@ -260,7 +264,9 @@ public class McpServer {
 
 		JadxInstance instance = getJadx(instanceId);
 		if (instance != null) {
-			String code = instance.getClassSmaliCode(className);
+			String code = instance.getClassSmaliCode(
+                    SignatureConverter.toJavaClassSignature(className)
+            );
 			if (code != null) {
 				response.put("result", code);
 				ctx.json(response);
@@ -281,7 +287,9 @@ public class McpServer {
 
 		JadxInstance instance = getJadx(instanceId);
 		if (instance != null) {
-			String superClass = instance.getSuperClass(className);
+			String superClass = instance.getSuperClass(
+                    SignatureConverter.toJavaClassSignature(className)
+            );
 			if (superClass != null) {
 				response.put("result", superClass);
 				ctx.json(response);
@@ -302,7 +310,9 @@ public class McpServer {
 
 		JadxInstance instance = getJadx(instanceId);
 		if (instance != null) {
-			List<String> interfaceNames = instance.getInterfaces(className);
+			List<String> interfaceNames = instance.getInterfaces(
+                    SignatureConverter.toJavaClassSignature(className)
+            );
 			if (interfaceNames != null) {
 				response.put("result", interfaceNames);
 				ctx.json(response);
@@ -323,7 +333,9 @@ public class McpServer {
 
 		JadxInstance instance = getJadx(instanceId);
 		if (instance != null) {
-			List<String> methodNames = instance.getClassMethods(className);
+			List<String> methodNames = instance.getClassMethods(
+                    SignatureConverter.toJavaClassSignature(className)
+            );
 			if (methodNames != null) {
 				response.put("result", methodNames);
 				ctx.json(response);
@@ -344,7 +356,9 @@ public class McpServer {
 
 		JadxInstance instance = getJadx(instanceId);
 		if (instance != null) {
-			List<String> fieldNames = instance.getClassFields(className);
+			List<String> fieldNames = instance.getClassFields(
+                    SignatureConverter.toJavaClassSignature(className)
+            );
 			if (fieldNames != null) {
 				response.put("result", fieldNames);
 				ctx.json(response);
@@ -361,17 +375,19 @@ public class McpServer {
     public void handleGetMethodCallers(Context ctx) {
         Map<String, Object> response = new HashMap<>();
         String instanceId = ctx.queryParam("instanceId");
-        String className = ctx.queryParam("className");
         String methodName = ctx.queryParam("methodName");
 
         JadxInstance instance = getJadx(instanceId);
         if (instance != null) {
-            List<String> callers = instance.getMethodCallers(className, methodName);
+            List<String> callers = instance.getMethodCallers(
+                    SignatureConverter.extractJavaClassFQN(methodName),
+                    SignatureConverter.toJavaMethodSignature(methodName)
+            );
             if (callers != null) {
                 response.put("result", callers);
                 ctx.json(response);
             } else {
-                response.put("error", "Cannot find caller for method `" + methodName + "` in class `" + className + "`." );
+                response.put("error", "Cannot find caller for method `" + methodName + "`." );
                 ctx.status(404).json(response);
             }
         } else {
@@ -387,7 +403,9 @@ public class McpServer {
 
         JadxInstance instance = getJadx(instanceId);
         if (instance != null) {
-            List<String> callers = instance.getClassCallers(className);
+            List<String> callers = instance.getClassCallers(
+                    SignatureConverter.toJavaClassSignature(className)
+            );
             if (callers != null) {
                 response.put("result", callers);
                 ctx.json(response);
@@ -404,17 +422,19 @@ public class McpServer {
     public void handleGetMethodOverrides(Context ctx) {
         Map<String, Object> response = new HashMap<>();
         String instanceId = ctx.queryParam("instanceId");
-        String className = ctx.queryParam("className");
         String methodName = ctx.queryParam("methodName");
 
         JadxInstance instance = getJadx(instanceId);
         if (instance != null) {
-            List<String> overrides = instance.getMethodOverrides(className, methodName);
+            List<String> overrides = instance.getMethodOverrides(
+                    SignatureConverter.extractJavaClassFQN(methodName),
+                    SignatureConverter.toJavaMethodSignature(methodName)
+            );
             if (overrides != null) {
                 response.put("result", overrides);
                 ctx.json(response);
             } else {
-                response.put("error", "Cannot find overrides for method `" + methodName + "` in class `" + className + "`." );
+                response.put("error", "Cannot find overrides for method `" + methodName + "`." );
                 ctx.status(404).json(response);
             }
         } else {
@@ -429,10 +449,6 @@ public class McpServer {
 				.check(it -> it == null || it > 0, "Count must be positive")
 				.getOrDefault(1);
 		ctx.json(response);
-	}
-
-	public void stop() {
-		app.stop();
 	}
 
 	private JadxInstance getJadx(String instanceId) {

@@ -7,7 +7,12 @@ public class TestMain {
 		JadxInstance instance = new JadxInstance();
 		instance.load("/home/xiaolu/Reverse/Android/China/应用宝/应用宝.apk");
 
-		List<String> methods = instance.getMethodCallers("com.tencent.assistant.activity.BaseActivity", "void activityExposureReport()");
+        String jvmSignature = "Lcom/tencent/assistant/activity/BaseActivity;->activityExposureReport()V";
+
+		List<String> methods = instance.getMethodCallers(
+                SignatureConverter.extractJavaClassFQN(jvmSignature),
+                SignatureConverter.toJavaMethodSignature(jvmSignature)
+        );
 		System.out.println(methods);
 	}
 }
