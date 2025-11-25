@@ -2,8 +2,10 @@
 import os
 import requests
 import json
+import re
 from fastmcp import FastMCP
 from typing import Annotated
+from xml.etree import ElementTree as ET
 
 
 mcp = FastMCP("jadx-daemon-mcp")
@@ -22,6 +24,45 @@ def get_jadx_url() -> str:
     host = os.getenv("JADX_DAEMON_MCP_HOST", "localhost")
     port = os.getenv("JADX_DAEMON_MCP_PORT", "8651")
     return f"http://{host}:{port}"
+
+
+# 定义为 unicode 字符串 (u'...')
+def preprocess_manifest(manifest_text):
+    """
+    一个健壮的 Manifest 预处理函数。
+    它会清理非法字符，并强行移除所有 <meta-data> 标签以避免解析错误。
+    """
+    # 1. 确保输入是 unicode 字符串，并忽略解码错误
+    if isinstance(manifest_text, str):
+        try:
+            manifest_text = manifest_text.decode('utf-8')
+        except UnicodeDecodeError:
+            manifest_text = manifest_text.decode('utf-8', 'ignore')
+
+    # 2. 清理基本的非法 XML 字符
+    # (保留这个作为基础卫生措施)
+    cleaned_chars = []
+    for char in manifest_text:
+        codepoint = ord(char)
+        if (codepoint == 0x9 or codepoint == 0xA or codepoint == 0xD or
+           (codepoint >= 0x20 and codepoint <= 0xD7FF) or
+           (codepoint >= 0xE000 and codepoint <= 0xFFFD) or
+           (codepoint >= 0x10000 and codepoint <= 0x10FFFF)):
+            cleaned_chars.append(char)
+    text_no_illegal_chars = u"".join(cleaned_chars)
+
+    # 3. 使用正则表达式，强行移除所有 <meta-data ... /> 标签
+    # re.DOTALL 使得 '.' 可以匹配包括换行在内的任意字符
+    # re.IGNORECASE 忽略大小写
+    # ur'...' 定义一个 unicode 正则表达式
+    text_no_metadata = re.sub(
+        r'<\s*meta-data.*?/>',
+        '',  # 替换为空字符串，即直接删除
+        text_no_illegal_chars,
+        flags=re.DOTALL | re.IGNORECASE
+    )
+    
+    return text_no_metadata
 
 
 @mcp.tool(
@@ -119,8 +160,58 @@ def get_all_exported_activities(
     query = {
         "instanceId": instanceId,
     }
-    response = requests.get(url + "/get_all_exported_activities", params=query)
-    return json.loads(response.text)
+    response = requests.get(url + "/get_manifest", params=query)
+    json_response = json.loads(response)
+
+    if "error" in json_response:
+        return json_response
+    
+    manifest_text = preprocess_manifest(json_response["result"])
+
+    try:
+        root = ET.fromstring(manifest_text.encode('utf-8'))
+    except Exception as e:
+        return {
+            "error": e
+        }
+
+    ANDROID_NS = 'http://schemas.android.com/apk/res/android'
+    exported_activities = []
+
+    # 获取包名
+    package_name = root.attrib.get('package', '').strip()
+
+    # 查找 <application> 节点
+    app_node = root.find('application')
+    if app_node is None:
+        return {
+            "error": "Cannot find application node."
+        }
+
+    for activity in app_node.findall('activity'):
+        name = activity.attrib.get('{' + ANDROID_NS + '}name')
+        exported = activity.attrib.get('{' + ANDROID_NS + '}exported')
+        has_intent_filter = len(activity.findall('intent-filter')) > 0
+
+        if not name:
+            continue
+
+        if exported == "true" or (exported is None and has_intent_filter):
+            normalized = set()
+
+            if name.startswith('.'):
+                normalized.add(package_name + name)
+            elif '.' not in name:
+                normalized.add(name)
+                normalized.add(package_name + '.' + name)
+            else:
+                normalized.add(name)
+
+            exported_activities.extend(normalized)
+
+    return {
+        "result": exported_activities
+    }
 
 
 @mcp.tool(
@@ -135,7 +226,57 @@ def get_all_exported_services(
         "instanceId": instanceId,
     }
     response = requests.get(url + "/get_all_exported_services", params=query)
-    return json.loads(response.text)
+    json_response = json.loads(response)
+
+    if "error" in json_response:
+        return json_response
+    
+    manifest_text = preprocess_manifest(json_response["result"])
+
+    try:
+        root = ET.fromstring(manifest_text.encode('utf-8'))
+    except Exception as e:
+        return {
+            "error": e
+        }
+
+    ANDROID_NS = 'http://schemas.android.com/apk/res/android'
+    exported_services = []
+
+    # 获取包名
+    package_name = root.attrib.get('package', '').strip()
+
+    # 查找 <application> 节点
+    app_node = root.find('application')
+    if app_node is None:
+        return {
+            "error": "Cannot find application node."
+        }
+
+    for activity in app_node.findall('service'):
+        name = activity.attrib.get('{' + ANDROID_NS + '}name')
+        exported = activity.attrib.get('{' + ANDROID_NS + '}exported')
+        has_intent_filter = len(activity.findall('intent-filter')) > 0
+
+        if not name:
+            continue
+
+        if exported == "true" or (exported is None and has_intent_filter):
+            normalized = set()
+
+            if name.startswith('.'):
+                normalized.add(package_name + name)
+            elif '.' not in name:
+                normalized.add(name)
+                normalized.add(package_name + '.' + name)
+            else:
+                normalized.add(name)
+
+            exported_services.extend(normalized)
+
+    return {
+        "result": exported_services
+    }
 
 
 @mcp.tool(
