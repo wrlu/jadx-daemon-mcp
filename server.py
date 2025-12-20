@@ -26,44 +26,41 @@ def get_jadx_url() -> str:
     return f"http://{host}:{port}"
 
 
-# 定义为 unicode 字符串 (u'...')
 def preprocess_manifest(manifest_text):
     """
     一个健壮的 Manifest 预处理函数。
     它会清理非法字符，并强行移除所有 <meta-data> 标签以避免解析错误。
     """
-    # 1. 确保输入是 unicode 字符串，并忽略解码错误
-    if isinstance(manifest_text, str):
+    # 1. 确保输入是字符串类型
+    if isinstance(manifest_text, bytes):
         try:
             manifest_text = manifest_text.decode('utf-8')
         except UnicodeDecodeError:
             manifest_text = manifest_text.decode('utf-8', 'ignore')
+    elif not isinstance(manifest_text, str):
+        # 如果既不是 bytes 也不是 str，转换为字符串
+        manifest_text = str(manifest_text)
 
     # 2. 清理基本的非法 XML 字符
-    # (保留这个作为基础卫生措施)
     cleaned_chars = []
     for char in manifest_text:
         codepoint = ord(char)
         if (codepoint == 0x9 or codepoint == 0xA or codepoint == 0xD or
-           (codepoint >= 0x20 and codepoint <= 0xD7FF) or
-           (codepoint >= 0xE000 and codepoint <= 0xFFFD) or
-           (codepoint >= 0x10000 and codepoint <= 0x10FFFF)):
+                (codepoint >= 0x20 and codepoint <= 0xD7FF) or
+                (codepoint >= 0xE000 and codepoint <= 0xFFFD) or
+                (codepoint >= 0x10000 and codepoint <= 0x10FFFF)):
             cleaned_chars.append(char)
-    text_no_illegal_chars = u"".join(cleaned_chars)
+    text_no_illegal_chars = "".join(cleaned_chars)  # 移除 u 前缀
 
     # 3. 使用正则表达式，强行移除所有 <meta-data ... /> 标签
-    # re.DOTALL 使得 '.' 可以匹配包括换行在内的任意字符
-    # re.IGNORECASE 忽略大小写
-    # ur'...' 定义一个 unicode 正则表达式
     text_no_metadata = re.sub(
-        r'<\s*meta-data.*?/>',
+        r'<\s*meta-data[^>]*?/>',  # 修正正则表达式，避免贪婪匹配问题
         '',  # 替换为空字符串，即直接删除
         text_no_illegal_chars,
         flags=re.DOTALL | re.IGNORECASE
     )
-    
-    return text_no_metadata
 
+    return text_no_metadata
 
 @mcp.tool(
     name="health",
@@ -77,7 +74,7 @@ def health() -> dict:
 
 @mcp.tool(
     name="load",
-    description="Load a single apk or dex file to jadx decomplier."
+    description="Load a single apk or dex file to jadx decomplier. There should be the file path in request parameter."
 )
 def load(
     filePath: Annotated[str, FILEPATH_ANNOTATED_STR]
@@ -170,7 +167,7 @@ def get_all_exported_activities(
         "instanceId": instanceId,
     }
     response = requests.get(url + "/get_manifest", params=query)
-    json_response = json.loads(response)
+    json_response = json.loads(response.text)
 
     if "error" in json_response:
         return json_response
@@ -235,7 +232,7 @@ def get_all_exported_services(
         "instanceId": instanceId,
     }
     response = requests.get(url + "/get_all_exported_services", params=query)
-    json_response = json.loads(response)
+    json_response = json.loads(response.text)
 
     if "error" in json_response:
         return json_response
