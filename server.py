@@ -74,7 +74,7 @@ def health() -> dict:
 
 @mcp.tool(
     name="load",
-    description="Load a single apk or dex file to jadx decomplier. There should be the file path in request parameter."
+    description="Load a single apk or dex file to jadx decomplier."
 )
 def load(
     filePath: Annotated[str, FILEPATH_ANNOTATED_STR]
