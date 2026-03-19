@@ -10,14 +10,16 @@ plugins {
 	id("com.github.ben-manes.versions") version "0.50.0"
 }
 
+val jadxVersion = "1.5.5"
+
 dependencies {
-	implementation("io.github.skylot:jadx-core:1.5.3")
-	implementation("io.github.skylot:jadx-dex-input:1.5.3")
-	implementation("io.github.skylot:jadx-java-input:1.5.3")
-	implementation("io.github.skylot:jadx-java-convert:1.5.3")
-	implementation("io.github.skylot:jadx-smali-input:1.5.3")
+	implementation("io.github.skylot:jadx-core:$jadxVersion")
+	implementation("io.github.skylot:jadx-dex-input:$jadxVersion")
+	implementation("io.github.skylot:jadx-java-input:$jadxVersion")
+	implementation("io.github.skylot:jadx-java-convert:$jadxVersion")
+	implementation("io.github.skylot:jadx-smali-input:$jadxVersion")
 	implementation("com.google.code.gson:gson:2.13.2")
-	implementation("io.javalin:javalin:6.7.0")
+	implementation("io.javalin:javalin:7.1.0")
 	implementation("org.slf4j:slf4j-simple:2.0.16")
     implementation("org.ow2.asm:asm:9.9")
 }

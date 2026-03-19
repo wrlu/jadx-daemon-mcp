@@ -47,43 +47,45 @@ public class McpServer {
 				return gson.fromJson(json, targetType);
 			}
 		};
-		app = Javalin.create(config -> config.jsonMapper(gsonMapper)).start(host, port);
+		app = Javalin.create(config -> {
+            /* Health checker API */
+            config.routes.get("/health", this::handleHealth);
 
-		/* Health checker API */
-		app.get("/health", this::handleHealth);
+            /* Android binary loader API */
+            config.routes.get("/load", this::handleLoad);
+            config.routes.get("/load_dir", this::handleLoadDir);
+            config.routes.get("/lookup_instance_id", this::handleLookupInstanceId);
+            config.routes.get("/unload", this::handleUnload);
+            config.routes.get("/unload_all", this::handleUnloadAll);
 
-		/* Android binary loader API */
-		app.get("/load", this::handleLoad);
-		app.get("/load_dir", this::handleLoadDir);
-        app.get("/lookup_instance_id", this::handleLookupInstanceId);
-		app.get("/unload", this::handleUnload);
-		app.get("/unload_all", this::handleUnloadAll);
+            /* AndroidManifest API */
+            config.routes.get("/get_manifest", this::handleGetManifest);
 
-		/* AndroidManifest API */
-		app.get("/get_manifest", this::handleGetManifest);
+            /* Code browser API */
+            config.routes.get("/get_method_decompiled_code", this::handleGetMethodDecompiledCode);
 
-		/* Code browser API */
-		app.get("/get_method_decompiled_code", this::handleGetMethodDecompiledCode);
+            /* Class structure API */
+            config.routes.get("/get_superclass", this::handleGetSuperClass);
+            config.routes.get("/get_interfaces", this::handleGetInterfaces);
+            config.routes.get("/get_class_methods", this::handleGetClassMethods);
+            config.routes.get("/get_class_fields", this::handleGetClassFields);
 
-		/* Class structure API */
-		app.get("/get_superclass", this::handleGetSuperClass);
-		app.get("/get_interfaces", this::handleGetInterfaces);
-		app.get("/get_class_methods", this::handleGetClassMethods);
-		app.get("/get_class_fields", this::handleGetClassFields);
+            /* Callers and overrides API */
+            config.routes.get("/get_method_callers", this::handleGetMethodCallers);
+            config.routes.get("/get_class_callers", this::handleGetClassCallers);
+            config.routes.get("/get_field_callers", this::handleGetFieldCallers);
+            config.routes.get("/get_method_overrides", this::handleGetMethodOverrides);
 
-        /* Callers and overrides API */
-        app.get("/get_method_callers", this::handleGetMethodCallers);
-        app.get("/get_class_callers", this::handleGetClassCallers);
-        app.get("/get_field_callers", this::handleGetFieldCallers);
-        app.get("/get_method_overrides", this::handleGetMethodOverrides);
+            /* AIDL API */
+            config.routes.get("/search_aidl_classes", this::handleSearchAidlClasses);
+            config.routes.get("/get_aidl_methods", this::handleGetAidlMethods);
+            config.routes.get("/get_aidl_impl_class", this::handleGetAidlImplClass);
 
-        /* AIDL API */
-        app.get("/search_aidl_classes", this::handleSearchAidlClasses);
-        app.get("/get_aidl_methods", this::handleGetAidlMethods);
-        app.get("/get_aidl_impl_class", this::handleGetAidlImplClass);
+            /* Management API */
+            config.routes.get("/update_max_instance_count", this::handleUpdateMaxInstanceCount);
 
-		/* Management API */
-		app.get("/update_max_instance_count", this::handleUpdateMaxInstanceCount);
+            config.jsonMapper(gsonMapper);
+        }).start(host, port);
 
         logger.info("Jadx daemon MCP HTTP server started at http://{}:{}", host, port);
 	}
