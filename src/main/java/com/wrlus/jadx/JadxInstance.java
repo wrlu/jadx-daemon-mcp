@@ -24,55 +24,72 @@ public class JadxInstance {
         this.filePath = path;
     }
 
-	public void load() {
-		if (isLoaded()) close();
+    public void load() {
+        File file = new File(filePath);
+        if (!file.exists() || !file.isFile()) {
+            logger.error("Invalid file path: {}", file.getAbsolutePath());
+            return;
+        }
+        realLoad(Collections.singletonList(file));
+    }
 
-		File file = new File(filePath);
-		if (!file.exists()) {
-			logger.error("No such file: {}", file.getAbsolutePath());
-			return;
-		}
-		if (!file.isFile()) {
-			logger.error("Not a file: {}", file.getAbsolutePath());
-			return;
-		}
-		JadxArgs jadxArgs = new JadxArgs();
-		jadxArgs.setInputFile(file);
-		decompiler = new JadxDecompiler(jadxArgs);
-		decompiler.load();
-	}
+    public void loadDir() {
+        File dir = new File(filePath);
+        if (!dir.exists() || !dir.isDirectory()) {
+            logger.error("Invalid directory path: {}", dir.getAbsolutePath());
+            return;
+        }
 
-	public void loadDir() {
-		if (isLoaded()) close();
+        File[] dirFiles = dir.listFiles();
+        if (dirFiles == null) {
+            logger.error("Permission denied or I/O error: {}", dir.getAbsolutePath());
+            return;
+        }
 
-		File dir = new File(filePath);
-		if (!dir.exists()) {
-			logger.error("No such directory: {}", dir.getAbsolutePath());
-			return;
-		}
-		if (!dir.isDirectory()) {
-			logger.error("Not a directory: {}", dir.getAbsolutePath());
-			return;
-		}
+        List<File> dexFiles = new ArrayList<>();
+        for (File f : dirFiles) {
+            if (isAndroidFile(f.getPath())) {
+                dexFiles.add(f);
+            }
+        }
 
-		File[] dirFiles = dir.listFiles();
-		if (dirFiles == null) {
-			logger.error("Permission denied: {}", dir.getAbsolutePath());
-			return;
-		}
+        if (dexFiles.isEmpty()) {
+            logger.warn("No valid Android files found in: {}", dir.getAbsolutePath());
+            return;
+        }
+        realLoad(dexFiles);
+    }
 
-		List<File> dexFiles = new ArrayList<>();
-		for (File dirFile : dirFiles) {
-			if (isAndroidFile(dirFile.getPath())) {
-				dexFiles.add(dirFile);
-			}
-		}
 
-		JadxArgs jadxArgs = new JadxArgs();
-		jadxArgs.setInputFiles(dexFiles);
-		decompiler = new JadxDecompiler(jadxArgs);
-		decompiler.load();
-	}
+    private void realLoad(List<File> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+
+        if (isLoaded()) {
+            close();
+        }
+
+        JadxArgs jadxArgs = new JadxArgs();
+        if (files.size() > 1) {
+            jadxArgs.setInputFiles(files);
+        } else {
+            jadxArgs.setInputFile(files.getFirst());
+        }
+
+        // Diable dex checksum verify.
+        Map<String, String> pluginOptions = new HashMap<>();
+        pluginOptions.put("dex-input.verify-checksum", "false");
+        jadxArgs.setPluginOptions(pluginOptions);
+
+        decompiler = new JadxDecompiler(jadxArgs);
+        try {
+            decompiler.load();
+            logger.info("Successfully loaded {} file(s).", files.size());
+        } catch (Exception e) {
+            logger.error("Failed to load files via JADX", e);
+        }
+    }
 
 	public String getManifest() {
 		if (!isLoaded()) return null;
