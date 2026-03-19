@@ -77,7 +77,7 @@ public class JadxInstance {
             jadxArgs.setInputFile(files.getFirst());
         }
 
-        // Diable dex checksum verify.
+        // Disable dex checksum verify.
         Map<String, String> pluginOptions = new HashMap<>();
         pluginOptions.put("dex-input.verify-checksum", "false");
         jadxArgs.setPluginOptions(pluginOptions);
